@@ -1,0 +1,225 @@
+/* ==========================================================================
+   RESEPKAN — BASE.CSS  (T01: fondasi dan design tokens)
+   Satu sumber kebenaran untuk warna (Light/Dark), tipografi, spacing, radius,
+   ukuran kontrol, dan aturan komponen dasar (button, fokus).
+
+   Aturan pakai:
+   - Teks berwarna orange memakai --primary-text (kontras >= 4.5:1).
+     --primary dipakai untuk fill, border, dan ikon/grafik saja.
+   - Teks di atas fill orange memakai --on-primary.
+   - Nama token lama (--primary-dark, --primary-light, --text-muted, --bg-alt,
+     --success-text, --warning-text, --danger, --danger-bg, --shadow) dipertahankan
+     sebagai alias di bagian bawah :root supaya CSS yang ada tidak rusak.
+   - --radius (8px) dan --radius-lg (12px) lama tidak diubah nilainya. Radius
+     baru memakai awalan --r-* agar tidak bentrok.
+   ========================================================================== */
+
+:root {
+  /* ---- Warna: Light ---- */
+  --primary: #F28C28;
+  --primary-hover: #D96F16;
+  --primary-soft: #FFF1DF;
+  --primary-soft-hover: #FFE6C8;
+  --primary-text: #A94A04;
+  --on-primary: #2B1704;
+
+  --bg: #FAF7F3;
+  --surface: #FFFFFF;
+  --surface-elevated: #FFFFFF;
+  --surface-sunken: #F4EFE9;
+  --border: #ECE5DC;
+  --border-strong: #D9CFC3;
+  --border-input: #8F8981;       /* hanya untuk kolom isian (kontras UI 3:1) */
+
+  --text: #1F1B17;
+  --text-secondary: #6B625A;
+  --text-tertiary: #746C66;      /* disesuaikan dari #9A9088 agar >= 4.5:1 */
+
+  --disabled-bg: #EFE9E2;
+  --disabled-text: #B3A99F;
+
+  --success: #297C4D;            /* disesuaikan dari #2E8B57 */
+  --success-bg: #E5F4EB;
+  --warning: #98641A;            /* disesuaikan dari #B7791F */
+  --warning-bg: #FFF4D6;
+  --error: #C23939;              /* disesuaikan dari #C83B3B */
+  --error-bg: #FDE8E6;
+
+  --shadow-1: 0 1px 2px rgba(31, 27, 23, 0.06);
+  --shadow-2: 0 8px 24px rgba(31, 27, 23, 0.08);
+
+  /* ---- Aksen kategori (sama di Light/Dark; dipakai sebagai titik/chip kecil) ---- */
+  --cat-makanan: #E8743B;
+  --cat-mie: #E5A52C;
+  --cat-dessert: #D9638A;
+  --cat-minuman: #3FA3B5;
+  --cat-pastry: #B98048;
+  --cat-sehat: #5FA463;
+
+  /* ---- Tipografi ---- */
+  /* Poppins adalah satu-satunya font desain. Bobot yang dimuat (index.html): 400, 500, 600, 700.
+     'sans-serif' hanya cadangan teknis. --fw-display (800) belum dipakai komponen mana pun dan
+     bobot 800 belum dimuat: bila token itu dipakai, tambahkan 800 pada tautan Google Fonts. */
+  --font-heading: 'Poppins', sans-serif;
+  --font-body: 'Poppins', sans-serif;
+
+  --fs-display: 44px;  --lh-display: 52px;  --fw-display: 800;  --ls-display: -0.02em;
+  --fs-h1: 36px;       --lh-h1: 44px;       --fw-h1: 700;       --ls-h1: -0.015em;
+  --fs-h2: 28px;       --lh-h2: 36px;       --fw-h2: 700;       --ls-h2: -0.01em;
+  --fs-h3: 22px;       --lh-h3: 30px;       --fw-h3: 700;       --ls-h3: -0.005em;
+  --fs-h4: 18px;       --lh-h4: 26px;       --fw-h4: 600;       --ls-h4: 0;
+  --fs-body-l: 16px;   --lh-body-l: 26px;   --fw-body-l: 400;   --ls-body-l: 0;
+  --fs-body: 14px;     --lh-body: 22px;     --fw-body: 400;     --ls-body: 0;
+  --fs-label: 13px;    --lh-label: 18px;    --fw-label: 500;    --ls-label: 0;
+  --fs-button: 14px;   --lh-button: 20px;   --fw-button: 600;   --ls-button: 0;
+  --fs-caption: 12px;  --lh-caption: 18px;  --fw-caption: 500;  --ls-caption: 0.01em;
+  --fs-overline: 11px; --lh-overline: 16px; --fw-overline: 600; --ls-overline: 0.06em;
+
+  /* ---- Spacing ---- */
+  --space-1: 4px;  --space-2: 8px;   --space-3: 12px; --space-4: 16px; --space-5: 20px;
+  --space-6: 24px; --space-8: 32px;  --space-10: 40px; --space-12: 48px; --space-16: 64px;
+
+  /* ---- Radius baru (awalan --r-*; --radius/--radius-lg lama di bawah tidak diubah) ---- */
+  --r-sm: 8px;  --r-md: 12px;  --r-lg: 16px;  --r-xl: 20px;  --r-2xl: 24px;  --r-pill: 999px;
+
+  /* ---- Ukuran kontrol ---- */
+  --btn-h: 44px;  --btn-h-sm: 36px;  --btn-h-lg: 52px;
+  --input-h: 48px;  --input-h-lg: 56px;
+  --icon-btn: 40px;  --icon-size: 20px;  --icon-size-lg: 24px;
+
+  /* ---- Layout (dipakai mulai T02) ---- */
+  --sidebar-w: 264px;
+  --sidebar-w-collapsed: 76px;
+  --content-max: 1120px;
+
+  /* ---- Nilai lama yang tetap ---- */
+  --radius: 8px;
+  --radius-lg: 12px;
+  --max-width: 900px;
+  --transition: 0.2s ease;
+
+  /* ---- Alias token lama -> token baru ---- */
+  --primary-dark: var(--primary-hover);
+  --primary-light: var(--primary-soft);
+  --text-muted: var(--text-secondary);
+  --bg-alt: var(--surface-sunken);
+  --success-text: var(--success);
+  --warning-text: var(--warning);
+  --danger: var(--error);
+  --danger-bg: var(--error-bg);
+  --shadow: var(--shadow-2);
+}
+
+/* ===== Dark mode: palet sendiri (bukan inversi Light) ===== */
+:root[data-theme="dark"] {
+  --primary: #F5993A;
+  --primary-hover: #FFAB57;
+  --primary-soft: #3A2616;
+  --primary-soft-hover: #47301C;
+  --primary-text: #F5993A;
+  --on-primary: #2B1704;
+
+  --bg: #151210;
+  --surface: #1E1A17;
+  --surface-elevated: #28231F;
+  --surface-sunken: #191512;
+  --border: #342E29;
+  --border-strong: #4A423B;
+  --border-input: #6D6157;
+
+  --text: #F3EEE8;
+  --text-secondary: #B5ABA1;
+  --text-tertiary: #8A8178;
+
+  --disabled-bg: #2A2521;
+  --disabled-text: #5E564F;
+
+  --success: #5CC389;
+  --success-bg: #17301F;
+  --warning: #E5B14F;
+  --warning-bg: #33290F;
+  --error: #F28079;
+  --error-bg: #3A1C1A;
+
+  --shadow-1: none;               /* Dark: dibedakan lewat border dan warna surface */
+  --shadow-2: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  /* 22/14: dinyatakan sebagai rasio supaya teks yang lebih besar tidak ikut
+     memakai tinggi baris 22px yang tetap. */
+  line-height: 1.5714;
+  font-weight: var(--fw-body);
+  background-color: var(--bg);
+  color: var(--text);
+  transition: background-color var(--transition), color var(--transition);
+}
+
+/* Selama initial load (sebelum app.js menandai data-theme-ready) transisi body
+   dimatikan agar pelukisan pertama tidak beranimasi dari warna default UA --
+   itu yang tampak sebagai "kilatan" tema. Transisi tetap ada setelah siap. */
+html:not([data-theme-ready]) body {
+  transition: none;
+}
+
+h1, h2, h3, h4, .logo, .logo-text { font-family: var(--font-heading); }
+
+button { font-family: inherit; cursor: pointer; }
+input { font-family: inherit; }
+a { color: inherit; text-decoration: none; }
+
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+input::placeholder { color: var(--text-tertiary); opacity: 1; }
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap; border: 0;
+}
+
+/* ===== Buttons ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--btn-h);
+  padding: 0 var(--space-5);
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  font-size: var(--fs-button);
+  line-height: var(--lh-button);
+  font-weight: var(--fw-button);
+  transition: background-color var(--transition), color var(--transition), border-color var(--transition);
+}
+.btn-sm { min-height: var(--btn-h-sm); padding: 0 var(--space-3); font-size: var(--fs-label); }
+.btn-lg { min-height: var(--btn-h-lg); padding: 0 28px; font-size: 15px; }
+
+.btn-primary { background-color: var(--primary); color: var(--on-primary); }
+.btn-primary:hover { background-color: var(--primary-hover); }
+
+.btn-secondary { background-color: var(--surface); color: var(--text); border-color: var(--border-strong); }
+.btn-secondary:hover { border-color: var(--primary); color: var(--primary-text); }
+
+.btn-ghost { background-color: transparent; color: var(--primary-text); }
+.btn-ghost:hover { background-color: var(--primary-soft); }
+
+.btn:disabled,
+.btn:disabled:hover {
+  background-color: var(--disabled-bg);
+  color: var(--disabled-text);
+  border-color: transparent;
+  cursor: not-allowed;
+}

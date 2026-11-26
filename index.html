@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resepkan - Recipe Generator</title>
+  <meta name="description" content="Masukkan bahan yang kamu punya, Resepin carikan resep paling cocok dari database asli." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Ikon tab: SVG inline (data URI) supaya tidak ada permintaan favicon.ico yang 404 -->
+  <link
+    rel="icon"
+    type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23e8541e'/%3E%3Ctext x='50' y='68' font-size='54' text-anchor='middle'%3E%F0%9F%8D%B2%3C/text%3E%3C/svg%3E"
+  />
+
+  <!-- CSS dipisah per tanggung jawab supaya tidak jadi satu file raksasa -->
+  <link rel="stylesheet" href="/style/base.css" />
+  <link rel="stylesheet" href="/style/layout.css" />
+  <link rel="stylesheet" href="/style/components.css" />
+  <link rel="stylesheet" href="/style/responsive.css" />
+
+  <script>
+    // Terapkan tema sedini mungkin (sebelum CSS dirender) supaya tidak ada
+    // "kedipan" warna terang sesaat sebelum berubah jadi gelap.
+    // Urutan prioritas (sama persis dengan initTheme() di app.js):
+    //   1. pilihan manual tersimpan ('dark' / 'light')
+    //   2. preferensi sistem (prefers-color-scheme)
+    //   3. tema terang sebagai default
+    (function () {
+      var isDark = false;
+      try {
+        var savedTheme = localStorage.getItem('resepin_theme');
+        if (savedTheme === 'dark' || savedTheme === 'light') {
+          isDark = savedTheme === 'dark'; // pilihan manual selalu menang
+        } else if (window.matchMedia) {
+          isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        }
+      } catch (e) {
+        // localStorage diblokir browser: tetap ikuti preferensi sistem bila bisa.
+        try {
+          isDark = !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        } catch (e2) { /* matchMedia tidak tersedia: default terang */ }
+      }
+      if (isDark) document.documentElement.setAttribute('data-theme', 'dark');
+    })();
+  </script>
+  <script>
+    // Terapkan status sidebar ciut sedini mungkin (sebelum render), sama seperti tema di atas,
+    // supaya sidebar tidak berkedip dari lebar penuh ke ciut saat halaman dimuat.
+    try {
+      if (window.matchMedia('(min-width: 641px)').matches &&
+          (window.matchMedia('(max-width: 1000px)').matches || localStorage.getItem('resepin_sidebar') === 'collapsed')) {
+        document.documentElement.classList.add('sb-pre');
+      }
+    } catch (e) { /* abaikan: sidebar tetap lebar */ }
+  </script>
+</head>
+<body>
+
+  <!-- ===== SPRITE IKON (satu gaya garis, dipakai sidebar) ===== -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="ic-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></symbol>
+      <symbol id="ic-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></symbol>
+      <symbol id="ic-heart" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></symbol>
+      <symbol id="ic-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+      <symbol id="ic-back" viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></symbol>
+      <symbol id="ic-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+      <symbol id="ic-panel" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></symbol>
+      <symbol id="ic-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+      <symbol id="ic-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></symbol>
+      <symbol id="ic-chef" viewBox="0 0 24 24"><path d="M6 14a4 4 0 1 1 1.5-7.7A4.5 4.5 0 0 1 16.5 6.3 4 4 0 1 1 18 14v5H6zM6 17h12"/></symbol>
+      <symbol id="ic-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+      <symbol id="ic-pencil" viewBox="0 0 24 24"><path d="M4 20h4l10-10a2.5 2.5 0 0 0-3.5-3.5L4 16.5V20z"/></symbol>
+      <symbol id="ic-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13M10 11v6M14 11v6"/></symbol>
+      <symbol id="ic-book" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 5.5V20.5M8 7.5h7M8 11h5"/></symbol>
+    </defs>
+  </svg>
+
+  <div class="app-shell sb-no-anim" id="appShell">
+
+    <!-- ===== BILAH ATAS (hanya tampil di layar sempit) ===== -->
+    <div class="mobile-bar">
+      <button type="button" id="sidebarToggleBtn" class="mobile-bar-btn" aria-label="Buka menu" aria-expanded="false" aria-controls="sidebar">
+        <svg class="sb-ic" aria-hidden="true"><use href="#ic-menu"/></svg>
+      </button>
+      <button type="button" class="sb-logo" id="mobileBarLogo" title="Kembali ke beranda"><span class="sb-logo-mark" aria-hidden="true"><svg class="sb-ic"><use href="#ic-chef"/></svg></span><span class="logo-text">Resepkan</span></button>
+    </div>
+    <div class="sidebar-overlay" id="sidebarOverlay" hidden></div>
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar" id="sidebar" aria-label="Navigasi utama">
+      <button type="button" class="sb-logo" id="sidebarLogo" title="Kembali ke beranda"><span class="sb-logo-mark" aria-hidden="true"><svg class="sb-ic"><use href="#ic-chef"/></svg></span><span class="logo-text">Resepkan</span></button>
+
+      <nav class="sb-nav" aria-label="Menu utama">
+        <button type="button" id="navSearch" class="sb-item is-active" aria-current="page" aria-label="Pencarian" title="Pencarian">
+          <svg class="sb-ic" aria-hidden="true"><use href="#ic-search"/></svg><span class="sb-label">Pencarian</span>
+        </button>
+        <div class="sb-group">
+          <button type="button" id="navCategory" class="sb-item" aria-label="Kategori" title="Kategori" aria-expanded="false" aria-controls="catSub">
+            <svg class="sb-ic" aria-hidden="true"><use href="#ic-grid"/></svg><span class="sb-label">Kategori</span><svg class="sb-ic sb-chev" aria-hidden="true"><use href="#ic-chev"/></svg>
+          </button>
+          <div class="sb-sub" id="catSub" role="group" aria-label="Pilih kategori" hidden></div>
+        </div>
+        <button type="button" id="favoritesNavBtn" class="sb-item" aria-label="Lihat resep favorit" title="Favorit">
+          <svg class="sb-ic" aria-hidden="true"><use href="#ic-heart"/></svg><span class="sb-label">Favorit</span><span id="favoritesCountBadge" class="sb-badge">0</span>
+        </button>
+        <button type="button" id="addRecipeNavBtn" class="sb-item" aria-label="Tambah resep baru" title="Tambah Resep" aria-haspopup="dialog" aria-controls="addRecipeModal">
+          <svg class="sb-ic" aria-hidden="true"><use href="#ic-plus"/></svg><span class="sb-label">Tambah Resep</span>
+        </button>
+        <button type="button" id="myRecipesNavBtn" class="sb-item" aria-label="Lihat resep yang saya tambahkan" title="Resep Saya" aria-haspopup="dialog" aria-controls="myRecipesModal">
+          <svg class="sb-ic" aria-hidden="true"><use href="#ic-book"/></svg><span class="sb-label">Resep Saya</span>
+        </button>
+      </nav>
+
+      <div class="sb-foot">
+        <button type="button" id="accountNavBtn" class="account-nav-btn" aria-haspopup="dialog" aria-controls="authModal">Masuk / Daftar</button>
+        <div class="sb-theme" role="group" aria-label="Tema tampilan">
+          <button type="button" id="themeLightBtn" aria-label="Mode terang" aria-pressed="true"><svg class="sb-ic" aria-hidden="true"><use href="#ic-sun"/></svg></button>
+          <button type="button" id="themeDarkBtn" aria-label="Mode gelap" aria-pressed="false"><svg class="sb-ic" aria-hidden="true"><use href="#ic-moon"/></svg></button>
+        </div>
+        <button type="button" id="themeToggle" class="theme-toggle" aria-label="Ganti mode gelap/terang" aria-pressed="false">
+          <span class="theme-toggle-icon" aria-hidden="true">🌙</span>
+        </button>
+        <button type="button" id="sidebarCollapseBtn" class="sb-item sb-collapse" aria-label="Ciutkan sidebar" title="Ciutkan sidebar" aria-pressed="false">
+          <svg class="sb-ic" aria-hidden="true"><use href="#ic-panel"/></svg><span class="sb-label">Ciutkan</span>
+        </button>
+      </div>
+    </aside>
+
+    <div class="app-content" id="appContent">
+
+  <main id="mainContent">
+
+    <!-- ===== HALAMAN: BERANDA ===== -->
+    <div class="page" id="homePage" data-page="home">
+
+    <!-- ===== HERO ===== -->
+    <section class="hero">
+      <div class="hero-inner">
+        <div class="hero-copy">
+          <p class="hero-eyebrow">Resepkan</p>
+          <h1 class="hero-title">Mau masak apa hari ini?</h1>
+          <p class="hero-subtitle">
+            Cari resep dari bahan yang kamu punya, atau langsung dari nama resepnya.
+          </p>
+          <button type="button" class="btn btn-primary hero-start-btn" id="startSearchBtn">
+            Mulai Cari
+          </button>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <div class="hero-plate">🍲</div>
+          <span class="hero-float hero-float-1">🥕</span>
+          <span class="hero-float hero-float-2">🍜</span>
+          <span class="hero-float hero-float-3">🍰</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CARA KERJA (tiga poin singkat di bawah hero) ===== -->
+    <section class="home-steps" aria-label="Cara kerja Resepkan">
+      <ul class="home-steps-list">
+        <li class="home-step">
+          <span class="home-step-icon" aria-hidden="true">
+            <svg class="home-step-glyph"><use href="#ic-search"/></svg>
+          </span>
+          <div class="home-step-body">
+            <p class="home-step-title">Pilih cara mencari</p>
+            <p class="home-step-desc">Dari bahan, nama resep, atau kategori.</p>
+          </div>
+        </li>
+        <li class="home-step">
+          <span class="home-step-icon" aria-hidden="true">
+            <svg class="home-step-glyph"><use href="#ic-chef"/></svg>
+          </span>
+          <div class="home-step-body">
+            <p class="home-step-title">Lihat resep yang cocok</p>
+            <p class="home-step-desc">Hasil diurutkan dari yang paling pas.</p>
+          </div>
+        </li>
+        <li class="home-step">
+          <span class="home-step-icon" aria-hidden="true">
+            <svg class="home-step-glyph"><use href="#ic-heart"/></svg>
+          </span>
+          <div class="home-step-body">
+            <p class="home-step-title">Simpan favoritmu</p>
+            <p class="home-step-desc">Tanpa daftar akun.</p>
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    </div><!-- /#homePage -->
+
+    <!-- ===== HALAMAN: PENCARIAN (2 metode) ===== -->
+    <div class="page" id="searchPage" data-page="search" hidden>
+
+    <!-- Kembali ke beranda (rute #/beranda) -->
+    <div class="page-back-row">
+      <button type="button" class="btn btn-ghost btn-sm page-back" id="backToHomeBtn">
+        <svg class="page-back-ic" aria-hidden="true"><use href="#ic-back"/></svg>Kembali ke Beranda
+      </button>
+    </div>
+
+    <!-- ===== MENU UTAMA: 2 METODE PENCARIAN ===== -->
+    <section class="search-options" aria-label="Pilih cara mencari resep">
+      <article class="search-option-card" id="optionIngredientCard">
+        <div class="search-option-icon" aria-hidden="true">🥕</div>
+        <h2 class="search-option-title">Cari Berdasarkan Bahan</h2>
+        <p class="search-option-desc">
+          Masukkan bahan yang kamu punya untuk menemukan resep yang cocok.
+        </p>
+        <button type="button" class="btn btn-primary search-option-btn" id="openIngredientSearchBtn"
+          aria-controls="ingredientPanel" aria-expanded="false">
+          Mulai Cari
+        </button>
+      </article>
+
+      <article class="search-option-card" id="optionNameCard">
+        <div class="search-option-icon" aria-hidden="true">🔍</div>
+        <h2 class="search-option-title">Cari Berdasarkan Nama</h2>
+        <p class="search-option-desc">
+          Masukkan nama resep yang ingin kamu buat.
+        </p>
+        <button type="button" class="btn btn-primary search-option-btn" id="openNameSearchBtn"
+          aria-controls="namePanel" aria-expanded="false">
+          Mulai Cari
+        </button>
+      </article>
+    </section>
+
+    <!-- ===== PANEL: CARI BERDASARKAN NAMA ===== -->
+    <section class="generator-section" id="namePanel" hidden>
+      <form class="generator-card" id="nameSearchForm" role="search">
+        <div class="panel-heading">
+          <h2 class="panel-title">🔍 Cari Resep</h2>
+          <button type="button" class="panel-close" aria-label="Tutup pencarian nama">&times;</button>
+        </div>
+        <label for="nameSearchInput" class="generator-label">Nama resep</label>
+        <div class="name-search-row">
+          <input
+            type="search"
+            id="nameSearchInput"
+            class="ingredient-input name-search-input"
+            placeholder="Contoh: Nasi Goreng"
+            autocomplete="off"
+          />
+          <button type="submit" class="btn btn-primary name-search-btn" id="nameSearchBtn" aria-label="Cari resep">
+            🔍 <span class="name-search-btn-text">Cari</span>
+          </button>
+        </div>
+        <p class="generator-message" id="nameSearchMessage" aria-live="polite"></p>
+        <button type="button" class="btn btn-primary recipe-retry-btn" id="nameRetryBtn" hidden>
+          Coba Lagi
+        </button>
+      </form>
+    </section>
+
+    <!-- ===== PANEL: CARI BERDASARKAN BAHAN (generator yang sudah ada) ===== -->
+    <section class="generator-section" id="ingredientPanel" hidden>
+      <div class="generator-card">
+        <div class="panel-heading">
+          <h2 class="panel-title">🥕 Cari Berdasarkan Bahan</h2>
+          <button type="button" class="panel-close" aria-label="Tutup pencarian bahan">&times;</button>
+        </div>
+
+        <label for="ingredientInput" class="generator-label">
+          Masukkan bahan yang tersedia
+        </label>
+
+        <div class="ingredient-input-row">
+          <input
+            type="text"
+            id="ingredientInput"
+            class="ingredient-input"
+            placeholder="Contoh: ayam, bawang putih..."
+            autocomplete="off"
+          />
+          <button type="button" id="addIngredientBtn" class="btn btn-secondary">
+            + Tambahkan Bahan
+          </button>
+        </div>
+
+        <!-- Filter bahan: cara alternatif menambah bahan lewat daftar, bukan ketik manual -->
+        <div class="ingredient-picker">
+          <button
+            type="button"
+            id="pickerToggleBtn"
+            class="picker-toggle"
+            aria-expanded="false"
+            aria-controls="pickerPanel"
+          >
+            🔽 Atau pilih dari daftar bahan
+          </button>
+          <div class="ingredient-picker-panel" id="pickerPanel" hidden>
+            <input
+              type="text"
+              id="pickerSearch"
+              class="picker-search"
+              placeholder="Ketik untuk mencari bahan (mis: ayam, tempe)..."
+              autocomplete="off"
+            />
+            <div class="picker-list" id="pickerList" role="group" aria-label="Pilih bahan yang tersedia"></div>
+          </div>
+        </div>
+
+        <div class="ingredient-chips" id="ingredientChips" aria-live="polite">
+          <p class="chips-empty" id="chipsEmptyText">Belum ada bahan ditambahkan.</p>
+        </div>
+
+        <button type="button" id="generateBtn" class="btn btn-primary generate-btn">
+          Cari Resep
+        </button>
+
+        <p class="generator-message" id="generatorMessage" aria-live="polite"></p>
+        <button type="button" class="btn btn-primary recipe-retry-btn" id="ingredientRetryBtn" hidden>
+          Coba Lagi
+        </button>
+      </div>
+    </section>
+
+    <!-- ===== KATEGORI (shortcut filter) ===== -->
+    <section class="category-section" aria-labelledby="categoryHeading">
+      <div class="category-inner">
+        <div class="category-header">
+          <h2 class="category-heading" id="categoryHeading">Kategori Resep</h2>
+          <button type="button" class="category-see-all" id="seeAllCategoriesBtn">Lihat Semua →</button>
+        </div>
+        <div class="category-grid-wrap">
+          <div class="category-grid" id="categoryGrid" role="list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== HASIL (bahan / nama / kategori memakai section yang sama) ===== -->
+    <section class="results-section" id="resultsSection" hidden>
+      <div class="results-inner">
+        <h2 class="results-title" id="resultsTitle">Hasil Pencocokan Resep</h2>
+        <p class="results-count" id="resultsCount" aria-live="polite"></p>
+        <div class="recipe-grid" id="resultsGrid"></div>
+
+        <div class="pagination" id="pagination" hidden>
+          <button type="button" id="prevPageBtn" class="btn btn-secondary">← Sebelumnya</button>
+          <span class="pagination-info" id="paginationInfo"></span>
+          <button type="button" id="nextPageBtn" class="btn btn-secondary">Selanjutnya →</button>
+        </div>
+      </div>
+    </section>
+
+    </div><!-- /#searchPage -->
+
+    <!-- ===== HALAMAN: FAVORIT (halaman mandiri, bukan modal) ===== -->
+    <div class="page" id="favoritesPage" data-page="favorites" hidden>
+      <section class="results-section">
+        <div class="results-inner">
+          <h2 class="results-title" id="favoritesTitle">♥ Favorit</h2>
+          <p class="results-count" id="favoritesPageCount" aria-live="polite"></p>
+          <div class="recipe-grid" id="favoritesPageGrid"></div>
+
+          <div class="pagination" id="favoritesPagination" hidden>
+            <button type="button" id="favoritesPrevPageBtn" class="btn btn-secondary">← Sebelumnya</button>
+            <span class="pagination-info" id="favoritesPaginationInfo"></span>
+            <button type="button" id="favoritesNextPageBtn" class="btn btn-secondary">Selanjutnya →</button>
+          </div>
+        </div>
+      </section>
+    </div><!-- /#favoritesPage -->
+
+  </main>
+
+  <!-- ===== FOOTER (hanya tampil di halaman pencarian) ===== -->
+  <footer class="footer" id="appFooter" hidden>
+    <div class="footer-inner">
+      <span class="logo-icon" aria-hidden="true">🍲</span>
+      <span class="logo-text">Resepkan</span>
+      <p class="footer-copy">&copy; <span id="footerYear"></span> Resepkan. All rights reserved.</p>
+    </div>
+  </footer>
+    </div><!-- /.app-content -->
+  </div><!-- /.app-shell -->
+
+  <!-- ===== MODAL: AKUN (masuk / daftar) ===== -->
+  <!-- Klik overlay ditangani di JS (cek e.target === overlay); atribut aria-haspopup
+       sengaja TIDAK dipakai di kontainer karena kontainer ini juga menampung tombol tutup. -->
+  <div class="modal-overlay" id="authModal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="authModalTitle" aria-describedby="authStatusMessage">
+      <div class="modal-header">
+        <h2 id="authModalTitle">Masuk</h2>
+        <button type="button" class="modal-close" id="closeAuthModal" aria-label="Tutup modal akun">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- Form masuk -->
+        <form class="auth-form" id="loginForm" novalidate>
+          <label class="auth-label" for="loginEmail">Email</label>
+          <input class="auth-input" type="email" id="loginEmail" name="email" autocomplete="email"
+            required placeholder="nama@email.com" />
+
+          <label class="auth-label" for="loginPassword">Password</label>
+          <input class="auth-input" type="password" id="loginPassword" name="password"
+            autocomplete="current-password" required minlength="6" />
+
+          <button type="submit" class="btn btn-primary auth-submit" id="loginSubmitBtn">Masuk</button>
+          <button type="button" class="auth-switch-btn" id="forgotPasswordLink"
+            aria-controls="forgotPanel" aria-expanded="false">Lupa password?</button>
+          <button type="button" class="auth-switch-btn" id="switchToRegisterBtn"
+            aria-controls="registerForm" aria-expanded="false">Belum punya akun? Daftar</button>
+        </form>
+
+        <!-- Form daftar -->
+        <form class="auth-form" id="registerForm" novalidate hidden>
+          <label class="auth-label" for="registerDisplayName">Nama tampilan</label>
+          <input class="auth-input" type="text" id="registerDisplayName" name="display_name"
+            autocomplete="name" required maxlength="60" placeholder="Contoh: Chef Budi" />
+
+          <label class="auth-label" for="registerUsername">Username</label>
+          <input class="auth-input" type="text" id="registerUsername" name="username"
+            autocomplete="username" required minlength="3" maxlength="30" pattern="[A-Za-z0-9_]+"
+            placeholder="Contoh: chef_budi" aria-describedby="registerUsernameHint" />
+          <p class="auth-hint" id="registerUsernameHint">Huruf, angka, dan garis bawah saja. Keunikan username ditentukan oleh database.</p>
+
+          <label class="auth-label" for="registerEmail">Email</label>
+          <input class="auth-input" type="email" id="registerEmail" name="email"
+            autocomplete="email" required placeholder="nama@email.com" />
+
+          <label class="auth-label" for="registerPassword">Password</label>
+          <input class="auth-input" type="password" id="registerPassword" name="password"
+            autocomplete="new-password" required minlength="6" aria-describedby="registerPasswordHint" />
+          <p class="auth-hint" id="registerPasswordHint">Minimal 6 karakter (batas minimum bawaan Supabase Auth).</p>
+
+          <button type="submit" class="btn btn-primary auth-submit" id="registerSubmitBtn">Daftar</button>
+          <button type="button" class="auth-switch-btn" id="switchToLoginBtn"
+            aria-controls="loginForm" aria-expanded="false">Sudah punya akun? Masuk</button>
+        </form>
+
+        <!-- Panel informasi konfirmasi email (tautan konfirmasi dari Supabase) -->
+        <div class="auth-form" id="verifyPanel" hidden>
+          <p class="auth-hint" id="verifyHintMessage">
+            Kami sudah mengirim tautan konfirmasi ke <strong id="otpEmailText"></strong>.
+            Buka email tersebut lalu klik tautan verifikasi untuk mengaktifkan akun kamu.
+          </p>
+
+          <button type="button" class="btn btn-secondary auth-submit" id="verifyResendBtn">Kirim Ulang Tautan</button>
+          <button type="button" class="auth-switch-btn" id="verifyBackBtn">Kembali ke Daftar</button>
+        </div>
+
+        <!-- Form permintaan reset password (lupa password) -->
+        <form class="auth-form" id="forgotForm" novalidate hidden>
+          <label class="auth-label" for="forgotEmail">Email akun</label>
+          <input class="auth-input" type="email" id="forgotEmail" name="email"
+            autocomplete="email" required placeholder="nama@email.com" />
+          <p class="auth-hint">Kami akan mengirim tautan untuk membuat password baru.</p>
+
+          <button type="submit" class="btn btn-primary auth-submit" id="forgotSubmitBtn">Kirim Tautan Reset</button>
+          <button type="button" class="auth-switch-btn" id="forgotBackBtn">Kembali ke Masuk</button>
+        </form>
+
+        <!-- Panel informasi: tautan reset sudah diproses -->
+        <div class="auth-form" id="resetSentPanel" hidden>
+          <p class="auth-hint" id="resetSentHint">
+            Jika email <strong id="resetSentEmail"></strong> terdaftar, kami sudah mengirim tautan untuk
+            membuat password baru. Periksa kotak masuk dan folder spam kamu.
+          </p>
+
+          <button type="button" class="btn btn-secondary auth-submit" id="resetResendBtn">Kirim Ulang Tautan</button>
+          <button type="button" class="auth-switch-btn" id="resetSentBackBtn">Kembali ke Masuk</button>
+        </div>
+
+        <!-- Panel password baru (diaktifkan pada D03-C setelah tautan reset dibuka) -->
+        <form class="auth-form" id="resetPasswordForm" novalidate hidden>
+          <label class="auth-label" for="resetPasswordInput">Password baru</label>
+          <input class="auth-input" type="password" id="resetPasswordInput" name="password"
+            autocomplete="new-password" required minlength="6" aria-describedby="resetPasswordHint" />
+          <p class="auth-hint" id="resetPasswordHint">Minimal 6 karakter.</p>
+
+          <label class="auth-label" for="resetPasswordConfirm">Ulangi password baru</label>
+          <input class="auth-input" type="password" id="resetPasswordConfirm" name="password_confirm"
+            autocomplete="new-password" required minlength="6" />
+
+          <button type="submit" class="btn btn-primary auth-submit" id="resetPasswordSubmitBtn">Simpan Password Baru</button>
+          <button type="button" class="auth-switch-btn" id="resetPasswordCancelBtn">Batal</button>
+        </form>
+
+        <!-- Status: dipakai untuk pesan proses, sukses, dan error -->
+        <p class="auth-status" id="authStatusMessage" role="status" aria-live="polite"></p>
+
+        <!-- Ditampilkan hanya ketika pengguna login -->
+        <div class="auth-account" id="authAccountPanel" hidden>
+          <!-- Ringkasan profil -->
+          <div class="profile-card" id="profileView">
+            <div class="profile-avatar" id="profileAvatar" aria-hidden="true"></div>
+            <div class="profile-identity">
+              <p class="profile-name" id="profileDisplayName"></p>
+              <p class="profile-username" id="profileUsername"></p>
+              <p class="profile-email" id="profileEmail"></p>
+            </div>
+          </div>
+          <p class="auth-hint profile-status" id="profileStatus" role="status" aria-live="polite"></p>
+
+          <button type="button" class="btn btn-secondary auth-submit" id="editProfileBtn">Edit Profil</button>
+
+          <!-- Form edit profil (tersembunyi secara default) -->
+          <form class="auth-form profile-edit-form" id="profileEditForm" novalidate hidden>
+            <label class="auth-label" for="editDisplayName">Nama tampilan</label>
+            <input class="auth-input" type="text" id="editDisplayName" name="display_name"
+              autocomplete="name" required maxlength="60" placeholder="Contoh: Chef Budi" />
+
+            <label class="auth-label" for="editUsername">Username</label>
+            <input class="auth-input" type="text" id="editUsername" name="username"
+              autocomplete="username" required minlength="3" maxlength="30" pattern="[A-Za-z0-9_]+"
+              placeholder="Contoh: chef_budi" aria-describedby="editUsernameHint" />
+            <p class="auth-hint" id="editUsernameHint">Huruf, angka, dan garis bawah saja (3–30 karakter).</p>
+
+            <p class="auth-status" id="profileEditStatus" role="status" aria-live="polite"></p>
+
+            <button type="submit" class="btn btn-primary auth-submit" id="saveProfileBtn">Simpan Perubahan</button>
+            <button type="button" class="auth-switch-btn" id="cancelProfileBtn">Batal</button>
+          </form>
+
+          <button type="button" class="btn btn-secondary auth-submit" id="logoutBtn">Keluar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: DETAIL RESEP ===== -->
+  <div class="modal-overlay" id="detailModal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="detailModalTitle">
+      <div class="modal-header">
+        <h2 id="detailModalTitle">Detail Resep</h2>
+        <button type="button" class="modal-close" id="closeDetailModal" aria-label="Tutup">&times;</button>
+      </div>
+      <div class="modal-body" id="detailModalBody"></div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: RESEP SAYA ===== -->
+  <div class="modal-overlay" id="myRecipesModal" hidden>
+    <div class="modal modal-detail" role="dialog" aria-modal="true" aria-labelledby="myRecipesModalTitle">
+      <div class="modal-header">
+        <h2 id="myRecipesModalTitle">Resep Saya</h2>
+        <button type="button" class="modal-close" id="closeMyRecipesModal" aria-label="Tutup daftar resep saya">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="auth-status" id="myRecipesStatus" role="status" aria-live="polite"></p>
+        <button type="button" class="btn btn-secondary recipe-retry-btn" id="myRecipesRetryBtn" hidden>Coba Lagi</button>
+        <div class="recipe-grid" id="myRecipesGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: DETAIL RESEP SAYA (resep Supabase, ID UUID) ===== -->
+  <div class="modal-overlay" id="myRecipeDetailModal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="myRecipeDetailTitle">
+      <div class="modal-header">
+        <h2 id="myRecipeDetailTitle">Detail Resep</h2>
+        <button type="button" class="modal-close" id="closeMyRecipeDetailModal" aria-label="Tutup">&times;</button>
+      </div>
+      <div class="modal-body" id="myRecipeDetailBody"></div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: EDIT RESEP (resep Supabase) ===== -->
+  <div class="modal-overlay" id="editRecipeModal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="editRecipeModalTitle" aria-describedby="editRecipeStatus">
+      <div class="modal-header">
+        <h2 id="editRecipeModalTitle">Edit Resep</h2>
+        <button type="button" class="modal-close" id="closeEditRecipeModal" aria-label="Tutup form edit resep">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form class="auth-form" id="editRecipeForm" novalidate>
+          <label class="auth-label" for="editRecipeTitle">Nama resep</label>
+          <input class="auth-input" type="text" id="editRecipeTitle" maxlength="120" required autocomplete="off" />
+
+          <label class="auth-label" for="editRecipeCategory">Kategori</label>
+          <select class="auth-input" id="editRecipeCategory" required></select>
+
+          <label class="auth-label" for="editRecipeDescription">Deskripsi (opsional)</label>
+          <textarea class="auth-input" id="editRecipeDescription" rows="3" maxlength="2000"></textarea>
+
+          <label class="auth-label" for="editRecipeImageUrl">URL gambar (opsional)</label>
+          <input class="auth-input" type="url" id="editRecipeImageUrl" autocomplete="off" />
+
+          <label class="auth-label" for="editRecipeIngredientInput">Bahan</label>
+          <div class="ingredient-input-row">
+            <input class="ingredient-input" type="text" id="editRecipeIngredientInput" maxlength="300" autocomplete="off" />
+            <button type="button" class="btn btn-secondary" id="editRecipeIngredientBtn">Tambah</button>
+          </div>
+          <div class="ingredient-chips" id="editRecipeIngredientList" aria-live="polite"></div>
+
+          <label class="auth-label" for="editRecipeStepInput">Langkah memasak</label>
+          <div class="ingredient-input-row">
+            <input class="ingredient-input" type="text" id="editRecipeStepInput" maxlength="300" autocomplete="off" />
+            <button type="button" class="btn btn-secondary" id="editRecipeStepBtn">Tambah</button>
+          </div>
+          <div class="ingredient-chips" id="editRecipeStepList" aria-live="polite"></div>
+
+          <p class="auth-status" id="editRecipeStatus" role="status" aria-live="polite"></p>
+
+          <button type="submit" class="btn btn-primary auth-submit" id="editRecipeSubmitBtn">Simpan Perubahan</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: KONFIRMASI HAPUS RESEP ===== -->
+  <div class="modal-overlay" id="deleteRecipeModal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="deleteRecipeModalTitle" aria-describedby="deleteRecipeStatus">
+      <div class="modal-header">
+        <h2 id="deleteRecipeModalTitle">Hapus Resep</h2>
+        <button type="button" class="modal-close" id="closeDeleteRecipeModal" aria-label="Batal menghapus resep">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="delete-confirm-text">Resep <strong id="deleteRecipeName"></strong> akan dihapus permanen. Tindakan ini tidak dapat dibatalkan.</p>
+        <p class="auth-status" id="deleteRecipeStatus" role="status" aria-live="polite"></p>
+        <div class="delete-confirm-actions">
+          <button type="button" class="btn btn-secondary" id="cancelDeleteRecipeBtn">Batal</button>
+          <button type="button" class="btn btn-primary" id="confirmDeleteRecipeBtn">Hapus</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- ===== MODAL: TAMBAH RESEP ===== -->
+  <div class="modal-overlay" id="addRecipeModal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="addRecipeModalTitle" aria-describedby="addRecipeStatus">
+      <div class="modal-header">
+        <h2 id="addRecipeModalTitle">Tambah Resep</h2>
+        <button type="button" class="modal-close" id="closeAddRecipeModal" aria-label="Tutup form tambah resep">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- novalidate: validasi dilakukan di JS (pola yang sama dengan form akun) -->
+        <form class="auth-form" id="addRecipeForm" novalidate>
+          <label class="auth-label" for="addRecipeTitle">Nama resep</label>
+          <input class="auth-input" type="text" id="addRecipeTitle" name="title"
+            maxlength="120" required placeholder="Contoh: Nasi Goreng Kampung" autocomplete="off" />
+
+          <label class="auth-label" for="addRecipeCategory">Kategori</label>
+          <select class="auth-input" id="addRecipeCategory" name="category" required>
+            <option value="">Pilih kategori...</option>
+          </select>
+
+          <label class="auth-label" for="addRecipeDescription">Deskripsi (opsional)</label>
+          <textarea class="auth-input" id="addRecipeDescription" name="description" rows="3"
+            maxlength="2000" placeholder="Ceritakan singkat tentang resep ini..."></textarea>
+
+          <label class="auth-label" for="addRecipeImageUrl">URL gambar (opsional)</label>
+          <input class="auth-input" type="url" id="addRecipeImageUrl" name="image_url"
+            placeholder="https://contoh.com/gambar.jpg" autocomplete="off" />
+
+          <label class="auth-label" for="addRecipeIngredientInput">Bahan</label>
+          <div class="ingredient-input-row">
+            <input class="ingredient-input" type="text" id="addRecipeIngredientInput"
+              maxlength="300" placeholder="Contoh: 2 siung bawang putih" autocomplete="off" />
+            <button type="button" class="btn btn-secondary" id="addRecipeIngredientBtn">Tambah</button>
+          </div>
+          <div class="ingredient-chips" id="addRecipeIngredientList" aria-live="polite"></div>
+
+          <label class="auth-label" for="addRecipeStepInput">Langkah memasak</label>
+          <div class="ingredient-input-row">
+            <input class="ingredient-input" type="text" id="addRecipeStepInput"
+              maxlength="300" placeholder="Contoh: Tumis bumbu hingga harum" autocomplete="off" />
+            <button type="button" class="btn btn-secondary" id="addRecipeStepBtn">Tambah</button>
+          </div>
+          <div class="ingredient-chips" id="addRecipeStepList" aria-live="polite"></div>
+
+          <p class="auth-status" id="addRecipeStatus" role="status" aria-live="polite"></p>
+
+          <button type="submit" class="btn btn-primary auth-submit" id="addRecipeSubmitBtn">Simpan Resep</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

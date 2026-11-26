@@ -1,0 +1,133 @@
+/* ==========================================================================
+   RESEPIN — RESPONSIVE.CSS
+   Seluruh media query, dipisah supaya gampang dicari & tidak tercampur
+   dengan style dasar komponennya.
+   ========================================================================== */
+
+/* Tablet */
+@media (max-width: 900px) {
+  .recipe-grid { grid-template-columns: repeat(2, 1fr); }
+  .category-grid { grid-template-columns: repeat(3, 1fr); }
+  /* Cara kerja: tiga item sudah terlalu sempit berjajar -> tumpuk vertikal, ikon tetap di kiri teks */
+  .home-steps-list { grid-template-columns: 1fr; gap: var(--space-4); }
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .recipe-grid { grid-template-columns: 1fr; }
+  /* Kartu hasil full-width di mobile: padding sedikit lebih kecil agar proporsional sampai 320px.
+     Kartu di dalam modal tetap ringkas (lihat aturan .modal .recipe-card di components.css). */
+  .results-section .recipe-card { padding: 18px 16px; }
+  /* Tombol aksi kartu Resep Saya: satu kolom, lebar penuh, tinggi ketuk nyaman. */
+  .recipe-card-actions .recipe-card-btn { flex: 1 1 100%; padding-block: 10px; }
+  /* Kartu profil: avatar sedikit lebih kecil agar tidak memakan ruang di 320px. */
+  .profile-card { gap: 12px; padding: 12px; }
+  .profile-avatar { width: 42px; height: 42px; font-size: 15px; }
+  .profile-name { font-size: 14px; }
+  .ingredient-input-row { flex-direction: column; }
+  .name-search-row { flex-direction: column; }
+  .name-search-btn-text { display: none; }
+  .generator-card { padding: 20px; }
+  .hero { padding: var(--space-6); margin: var(--space-4) var(--space-4) 0; }
+  /* Padding samping 16px sama dengan margin samping hero di layar sempit, jadi tepinya tetap sejajar */
+  .home-steps { margin-top: var(--space-6); padding: 0 var(--space-4); }
+  .hero-inner { grid-template-columns: 1fr; gap: var(--space-6); }
+  .hero-title { font-size: var(--fs-h2); line-height: var(--lh-h2); letter-spacing: var(--ls-h2); }
+  .hero-art { max-width: 200px; }
+  .hero-plate { font-size: 64px; }
+  .generator-section { padding: 24px 16px; }
+  .modal { max-height: 92vh; }
+  .results-title { font-size: 24px; line-height: 32px; }
+
+  /* Dua metode pencarian jadi satu kolom */
+  .search-options { grid-template-columns: 1fr; margin-top: var(--space-6); padding: 0 var(--space-4); gap: var(--space-4); }
+  .page-back-row { margin-top: var(--space-4); padding: 0 var(--space-4); }
+  .search-option-card { padding: 20px 18px; }
+
+  /* Kategori: horizontal scroll supaya tidak memenuhi layar */
+  .category-section { margin-top: var(--space-6); padding: 0 var(--space-4); }
+  .category-grid-wrap { display: block; position: relative; }
+  /* Petunjuk visual bahwa daftar bisa digeser. pointer-events:none supaya
+     tidak menghalangi klik/scroll; warna memakai token tema. */
+  .category-grid-wrap::after {
+    content: "";
+    position: absolute;
+    top: 0; right: 0; bottom: 6px;
+    width: 36px;
+    pointer-events: none;
+    background: linear-gradient(to right, transparent, var(--bg));
+  }
+  .category-grid-wrap::before {
+    content: "Geser \2192";
+    position: absolute;
+    top: -20px; right: 0;
+    font-size: 11px;
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+  .category-grid {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    padding-bottom: 6px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .category-card { flex: 0 0 118px; scroll-snap-align: start; }
+
+  .pagination { flex-wrap: wrap; gap: 10px; }
+  /* Target ketuk pagination mendekati 44px di layar sentuh. */
+  .pagination .btn { min-height: 44px; min-width: 64px; }
+  .pagination-info { order: -1; width: 100%; text-align: center; }
+
+  .detail-top-row { flex-wrap: wrap; }
+  .recipe-card-fav-labeled { font-size: 13px; padding: 8px 14px; }
+}
+
+/* ===== Modal pada viewport pendek / landscape ===== */
+@media (max-height: 520px) {
+  .modal-overlay { align-items: flex-start; padding: 8px; }
+  .modal { max-height: calc(100vh - 16px); }
+  .modal-header { padding: 10px 16px; }
+  .modal-body { padding: 14px 16px; }
+  .modal-close { flex: none; }
+}
+
+/* ===== Sidebar: tombol ciut disembunyikan saat otomatis ciut, dan drawer mobile (T02.1) ===== */
+@media (max-width: 1000px) {
+  .sb-collapse { display: none; }
+}
+
+@media (max-width: 640px) {
+  .app-shell { flex-direction: column; }
+  .mobile-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    height: 56px;
+    padding: 0 var(--space-4);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .mobile-bar .sb-logo { padding: 0; }
+  .sidebar {
+    position: fixed;
+    top: 0; bottom: 0; left: 0;
+    width: 280px;
+    height: auto;
+    overflow-y: auto;
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform var(--transition), visibility 0s linear 0.2s;
+    z-index: 900;
+    box-shadow: var(--shadow-2);
+  }
+  .sidebar > .sb-logo { display: none; }
+  .app-shell.is-drawer-open .sidebar { transform: none; visibility: visible; transition-delay: 0s; }
+  .sidebar-overlay { display: block; position: fixed; inset: 0; background: rgba(20, 18, 16, 0.45); z-index: 890; }
+  .sidebar-overlay[hidden] { display: none; }
+  body.sb-lock { overflow: hidden; }
+  .search-options, .generator-section, .category-section, .results-section { scroll-margin-top: 68px; }
+}
